@@ -54,15 +54,7 @@ const HACKER_LOADOUTS = [
   },
 ];
 
-Hooks.on("createItem", async (item, _options, userId) => {
-  // Only run on the client that triggered the creation, avoid duplicate execution.
-  if (userId !== game.user.id) return;
-  if (item.type !== "skill") return;
-  if (item.name !== "Hacking" || item.system.rank !== "Expert") return;
-  const actor = item.parent;
-  if (!actor || actor.type !== "character") return;
-
-  // Draw from the Hacker Loadout rolltable (posts its own chat card).
+async function rollHackerLoadout(actor) {
   const tablePack = game.packs.get("fvtt_mosh_1e_hacking.rolltables_hacking_1e");
   if (!tablePack) {
     ui.notifications.warn("fvtt_mosh_1e_hacking: Hacking Tables compendium not found.");
@@ -76,7 +68,6 @@ Hooks.on("createItem", async (item, _options, userId) => {
   const loadout = HACKER_LOADOUTS[resultIndex];
   if (!loadout) return;
 
-  // Auto-grant items that live in this pack.
   if (loadout.hackingIds.length > 0) {
     const itemPack = game.packs.get("fvtt_mosh_1e_hacking.items_hacking_1e");
     if (itemPack) {
@@ -86,7 +77,6 @@ Hooks.on("createItem", async (item, _options, userId) => {
     }
   }
 
-  // Post a follow-up card if any items need to be granted manually.
   if (loadout.other.length > 0) {
     await ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor }),
@@ -97,4 +87,16 @@ Hooks.on("createItem", async (item, _options, userId) => {
       </div>`,
     });
   }
+}
+
+// Fires when a Hacking skill (Expert or Master rank) is added to a character.
+Hooks.on("createItem", async (item, _options, userId) => {
+  if (userId !== game.user.id) return;
+  if (item.type !== "skill") return;
+  if (item.name !== "Hacking") return;
+  if (!["Expert", "Master"].includes(item.system.rank)) return;
+  const actor = item.parent;
+  if (!actor || actor.type !== "character") return;
+
+  await rollHackerLoadout(actor);
 });
