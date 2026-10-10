@@ -89,14 +89,44 @@ async function rollHackerLoadout(actor) {
   }
 }
 
-// Fires when a Hacking skill (Expert or Master rank) is added to a character.
+// Roll Hacker Loadout whenever Expert Hacking is granted to a character.
 Hooks.on("createItem", async (item, _options, userId) => {
   if (userId !== game.user.id) return;
-  if (item.type !== "skill") return;
-  if (item.name !== "Hacking") return;
-  if (!["Expert", "Master"].includes(item.system.rank)) return;
   const actor = item.parent;
   if (!actor || actor.type !== "character") return;
 
-  await rollHackerLoadout(actor);
+  // Hacking loadout trigger — Expert rank only (Master level comes from the Sinclair 2 deck).
+  if (item.type === "skill" && item.name === "Hacking" && item.system.rank === "Expert") {
+    await rollHackerLoadout(actor);
+    return;
+  }
+
+  // Sinclair 2 — treat Hacking as Master level while the deck is in inventory.
+  if (item.name === "Sinclair 2") {
+    const hackingSkill = actor.items.find(i => i.type === "skill" && i.name === "Hacking");
+    if (!hackingSkill) return;
+    await hackingSkill.update({
+      "system.bonus": 20,
+      "flags.fvtt_mosh_1e_hacking.pre_sinclair2_bonus": hackingSkill.system.bonus,
+    });
+    ui.notifications.info(`${actor.name}: Sinclair 2 upgrades Hacking to Master level.`);
+  }
+});
+
+// Sinclair 2 removed — restore the Hacking skill bonus to its prior Expert value.
+Hooks.on("deleteItem", async (item, _options, userId) => {
+  if (userId !== game.user.id) return;
+  if (item.name !== "Sinclair 2") return;
+  const actor = item.parent;
+  if (!actor || actor.type !== "character") return;
+
+  const hackingSkill = actor.items.find(i => i.type === "skill" && i.name === "Hacking");
+  if (!hackingSkill) return;
+
+  const prior = hackingSkill.flags?.fvtt_mosh_1e_hacking?.pre_sinclair2_bonus ?? 15;
+  await hackingSkill.update({
+    "system.bonus": prior,
+    "flags.fvtt_mosh_1e_hacking.-=pre_sinclair2_bonus": null,
+  });
+  ui.notifications.info(`${actor.name}: Sinclair 2 removed. Hacking restored to Expert level.`);
 });
