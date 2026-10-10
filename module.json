@@ -1,0 +1,47 @@
+{
+  "id": "fvtt_mosh_1e_hacking",
+  "title": "Mothership 1e — Hacking",
+  "description": "Hacking rules, equipment, loadouts, and response tables for Mothership 1e. Expert Hacking required; non-experts roll at disadvantage.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "11",
+    "verified": "14"
+  },
+  "authors": [
+    {
+      "name": "mechanoid23"
+    }
+  ],
+  "packs": [
+    {
+      "label": "Hacking Equipment (1e)",
+      "type": "Item",
+      "name": "items_hacking_1e",
+      "path": "packs/items_hacking_1e.db",
+      "system": "mosh"
+    },
+    {
+      "label": "Hacking Tables (1e)",
+      "type": "RollTable",
+      "name": "rolltables_hacking_1e",
+      "path": "packs/rolltables_hacking_1e.db",
+      "system": "mosh"
+    }
+  ],
+  "relationships": {
+    "systems": [
+      {
+        "id": "mosh",
+        "type": "system",
+        "manifest": "https://raw.githubusercontent.com/mechanoid23/fvtt-mosh-fork/master/system.json",
+        "compatibility": {
+          "minimum": "0.5.25",
+          "verified": "0.6.28"
+        }
+      }
+    ]
+  },
+  "url": "https://github.com/mechanoid23/fvtt_mosh_1e_hacking",
+  "manifest": "https://raw.githubusercontent.com/mechanoid23/fvtt_mosh_1e_hacking/main/module.json",
+  "download": "https://github.com/mechanoid23/fvtt_mosh_1e_hacking/releases/download/v0.1.0/fvtt_mosh_1e_hacking.zip"
+}
