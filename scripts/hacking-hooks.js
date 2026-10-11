@@ -101,6 +101,20 @@ Hooks.on("createItem", async (item, _options, userId) => {
     return;
   }
 
+  // Burndeck — flag: all nodes at +1 Response (displayed as reminder in Hacking Check macro).
+  if (item.name === "KOMPAN-88 'Burndeck'") {
+    await actor.setFlag("fvtt_mosh_1e_hacking", "hasBurndeck", true);
+    ui.notifications.info(`${actor.name}: Burndeck equipped — all nodes at +1 Response.`);
+    return;
+  }
+
+  // Sato Bliss — flag: Hardened nodes treated as Secured.
+  if (item.name === "Sato Bliss") {
+    await actor.setFlag("fvtt_mosh_1e_hacking", "hasSatoBliss", true);
+    ui.notifications.info(`${actor.name}: Sato Bliss equipped — Hardened nodes treated as Secured.`);
+    return;
+  }
+
   // Sinclair 2 — treat Hacking as Master level while the deck is in inventory.
   if (item.name === "Sinclair 2") {
     const hackingSkill = actor.items.find(i => i.type === "skill" && i.name === "Hacking");
@@ -113,20 +127,32 @@ Hooks.on("createItem", async (item, _options, userId) => {
   }
 });
 
-// Sinclair 2 removed — restore the Hacking skill bonus to its prior Expert value.
+// Inventory removal hooks — restore state when hacking decks are removed.
 Hooks.on("deleteItem", async (item, _options, userId) => {
   if (userId !== game.user.id) return;
-  if (item.name !== "Sinclair 2") return;
   const actor = item.parent;
   if (!actor || actor.type !== "character") return;
 
-  const hackingSkill = actor.items.find(i => i.type === "skill" && i.name === "Hacking");
-  if (!hackingSkill) return;
+  if (item.name === "KOMPAN-88 'Burndeck'") {
+    await actor.unsetFlag("fvtt_mosh_1e_hacking", "hasBurndeck");
+    ui.notifications.info(`${actor.name}: Burndeck removed.`);
+    return;
+  }
 
-  const prior = hackingSkill.flags?.fvtt_mosh_1e_hacking?.pre_sinclair2_bonus ?? 15;
-  await hackingSkill.update({
-    "system.bonus": prior,
-    "flags.fvtt_mosh_1e_hacking.-=pre_sinclair2_bonus": null,
-  });
-  ui.notifications.info(`${actor.name}: Sinclair 2 removed. Hacking restored to Expert level.`);
+  if (item.name === "Sato Bliss") {
+    await actor.unsetFlag("fvtt_mosh_1e_hacking", "hasSatoBliss");
+    ui.notifications.info(`${actor.name}: Sato Bliss removed.`);
+    return;
+  }
+
+  if (item.name === "Sinclair 2") {
+    const hackingSkill = actor.items.find(i => i.type === "skill" && i.name === "Hacking");
+    if (!hackingSkill) return;
+    const prior = hackingSkill.flags?.fvtt_mosh_1e_hacking?.pre_sinclair2_bonus ?? 15;
+    await hackingSkill.update({
+      "system.bonus": prior,
+      "flags.fvtt_mosh_1e_hacking.-=pre_sinclair2_bonus": null,
+    });
+    ui.notifications.info(`${actor.name}: Sinclair 2 removed. Hacking restored to Expert level.`);
+  }
 });
