@@ -169,30 +169,6 @@ Hooks.on("createItem", async (item, _options, userId) => {
     return;
   }
 
-  // Single-Use Software — prompt to assign to a deck or wristcomm in the character's inventory.
-  if (item.flags?.fvtt_mosh_1e_hacking?.category === "single-use-software") {
-    const carriers = actor.items.filter(i =>
-      ["deck", "wristcomm"].includes(i.flags?.fvtt_mosh_1e_hacking?.category) && i.id !== item.id
-    );
-    if (carriers.length === 0) return;
-    const opts = carriers.map(d => `<option value="${d.id}">${d.name}</option>`).join("");
-    const deckId = await foundry.applications.api.DialogV2.wait({
-      window: { title: "Assign Software to Deck" },
-      content: `<div style="padding:4px">
-        <label>Load <strong>${item.name}</strong> onto which deck?</label><br>
-        <select id="deck-sel" style="width:100%;margin-top:6px">
-          <option value="">— Unassigned —</option>
-          ${opts}
-        </select>
-      </div>`,
-      buttons: [
-        { action: "ok", label: "Assign", default: true,
-          callback: (evt) => evt.target.closest("form, .dialog-content, .window-content")?.querySelector("#deck-sel")?.value || null },
-        { action: "skip", label: "Skip", callback: () => null },
-      ],
-    });
-    if (deckId) await item.setFlag("fvtt_mosh_1e_hacking", "loadedOn", deckId);
-  }
 });
 
 const CATEGORY_LABELS = {
@@ -202,27 +178,62 @@ const CATEGORY_LABELS = {
   "single-use-software": "Single-Use Software",
 };
 
-// Render equipment type (and loaded-deck name for software) on hacking item sheets.
+// Render equipment type and deck-assignment controls on hacking item sheets.
 Hooks.on("renderItemSheet", (app, html, _data) => {
   const item = app.item;
   const category = item?.flags?.fvtt_mosh_1e_hacking?.category;
   if (!category) return;
 
   const label = CATEGORY_LABELS[category] ?? category;
-  let sub = "";
-  if (category === "single-use-software") {
-    const loadedOnId = item.flags?.fvtt_mosh_1e_hacking?.loadedOn;
-    if (loadedOnId && item.parent) {
-      const deck = item.parent.items.get(loadedOnId);
-      if (deck) sub = ` &mdash; ${deck.name}`;
-    }
-  }
-
-  const badge = `<p class="hacking-item-type" style="text-align:center;font-size:0.72em;font-weight:bold;text-transform:uppercase;letter-spacing:1px;color:#888;margin:2px 0 4px 0">${label}${sub}</p>`;
+  const badge = `<p class="hacking-item-type" style="text-align:center;font-size:0.72em;font-weight:bold;text-transform:uppercase;letter-spacing:1px;color:#888;margin:2px 0 4px 0">${label}</p>`;
   const $html = html.jquery ? html : $(html);
   const $anchor = $html.find(".sheet-header").first();
   if ($anchor.length) $anchor.after(badge);
   else $html.prepend(badge);
+
+  // Deck-assignment button for single-use software embedded on a character.
+  if (category !== "single-use-software" || !item.isEmbedded || item.parent?.type !== "character") return;
+
+  const actor = item.parent;
+  const loadedOnId = item.flags?.fvtt_mosh_1e_hacking?.loadedOn;
+  const currentDeck = loadedOnId ? actor.items.get(loadedOnId) : null;
+  const btnLabel = currentDeck ? `Deck: ${currentDeck.name}` : "Assign to Deck";
+
+  const $btn = $(`<button type="button" class="hacking-assign-btn" style="display:block;width:calc(100% - 16px);margin:0 8px 6px;font-size:0.8em">${btnLabel}</button>`);
+  $btn.on("click", async (evt) => {
+    evt.preventDefault();
+    const carriers = actor.items.filter(i =>
+      ["deck", "wristcomm"].includes(i.flags?.fvtt_mosh_1e_hacking?.category)
+    );
+    if (!carriers.length) {
+      ui.notifications.warn("No hacking decks or wristcomms in inventory.");
+      return;
+    }
+    const opts = carriers.map(d =>
+      `<option value="${d.id}"${d.id === loadedOnId ? " selected" : ""}>${d.name}</option>`
+    ).join("");
+    const result = await foundry.applications.api.DialogV2.wait({
+      window: { title: "Assign Software to Deck" },
+      content: `<div style="padding:4px">
+        <label>Load <strong>${item.name}</strong> onto:</label><br>
+        <select id="deck-sel" style="width:100%;margin-top:6px">
+          <option value="">— Unassigned —</option>
+          ${opts}
+        </select>
+      </div>`,
+      buttons: [
+        { action: "ok", label: "Assign", default: true,
+          callback: (e) => e.target.closest("form, .dialog-content, .window-content")?.querySelector("#deck-sel")?.value ?? "" },
+        { action: "cancel", label: "Cancel", callback: () => undefined },
+      ],
+    });
+    if (result === undefined) return;
+    if (result) await item.setFlag("fvtt_mosh_1e_hacking", "loadedOn", result);
+    else await item.unsetFlag("fvtt_mosh_1e_hacking", "loadedOn");
+    app.render(true);
+  });
+
+  $html.find(".hacking-item-type").after($btn);
 });
 
 // Inventory removal hooks — restore state when hacking decks are removed.
