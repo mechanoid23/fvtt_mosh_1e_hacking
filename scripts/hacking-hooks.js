@@ -1,56 +1,92 @@
-// Maps loadout roll result (index 0–9) to hacking-pack item IDs and manually-granted items.
-// hackingIds: auto-granted from fvtt_mosh_1e_hacking.items_hacking_1e
-// other: listed in a chat message for the GM to grant manually
+// Maps loadout roll result (index 0–9) to items across module packs.
+// Each entry in `items` is { pack: "<compendium-key>", id: "<16-char ID>" }.
+const HACKER = "fvtt_mosh_1e_hacking.items_hacking_1e";
+const WPN    = "fvtt_mosh_1e_psg.items_weapons_1e";
+const EQP    = "fvtt_mosh_1e_psg.items_equipment_1e";
+const MED    = "fvtt_mosh_1e_psg.items_medical_care_1e";
+const ARM    = "fvtt_mosh_1e_psg.items_armor_1e";
+
 const HACKER_LOADOUTS = [
   {
     label: "'Onika' workstation (Icebreaker, Ripper2)",
-    hackingIds: ["OnikaFedTrnWrk4n", "IceBrkrSftw500cX", "Rippre2Sftw1kcrP"],
-    other: [],
+    items: [
+      { pack: HACKER, id: "OnikaFedTrnWrk4n" },
+      { pack: HACKER, id: "IceBrkrSftw500cX" },
+      { pack: HACKER, id: "Rippre2Sftw1kcrP" },
+    ],
   },
   {
     label: "SMG, Node Detector, Faraday Bag",
-    hackingIds: ["NodeDetct750crJk", "FaradayBag75crBX"],
-    other: ["SMG"],
+    items: [
+      { pack: WPN,    id: "boqUPFJbGBET0Th5" },
+      { pack: HACKER, id: "NodeDetct750crJk" },
+      { pack: HACKER, id: "FaradayBag75crBX" },
+    ],
   },
   {
     label: "'Burndeck' (CoyBoy), Vaccsuit, Stimpak",
-    hackingIds: ["BurnDeckKompn88X", "CoyBoySftw2kcrM8"],
-    other: ["Vaccsuit", "Stimpak"],
+    items: [
+      { pack: HACKER, id: "BurnDeckKompn88X" },
+      { pack: HACKER, id: "CoyBoySftw2kcrM8" },
+      { pack: ARM,    id: "MW8GRF9grFvsAGcR" },
+      { pack: MED,    id: "EkA39xa1vq6SghtP" },
+    ],
   },
   {
     label: "Revolver, Crowbar, 'MX Tattler' (Xmap)",
-    hackingIds: ["MXTattlrMgrmX5Qz", "XmapSftwar2kcrT9"],
-    other: ["Revolver", "Crowbar"],
+    items: [
+      { pack: WPN,    id: "TlUbDBpALeBvrVZb" },
+      { pack: WPN,    id: "1fpZrZ5uN7Ad9XvX" },
+      { pack: HACKER, id: "MXTattlrMgrmX5Qz" },
+      { pack: HACKER, id: "XmapSftwar2kcrT9" },
+    ],
   },
   {
     label: "Electronic Tool Set, Stun Baton, Brickboy",
-    hackingIds: ["BrickboyDngl300c"],
-    other: ["Electronic Tool Set", "Stun Baton"],
+    items: [
+      { pack: EQP,    id: "4YWdcVso4Gp3luql" },
+      { pack: WPN,    id: "rK9PSJLqUDDd5nO8" },
+      { pack: HACKER, id: "BrickboyDngl300c" },
+    ],
   },
   {
     label: "Assorted Tools, 'Burndeck' (Maze)",
-    hackingIds: ["BurnDeckKompn88X", "MazeSoftwar500cN"],
-    other: ["Assorted Tools"],
+    items: [
+      { pack: EQP,    id: "H3tGGe3I8lzbP8bS" },
+      { pack: HACKER, id: "BurnDeckKompn88X" },
+      { pack: HACKER, id: "MazeSoftwar500cN" },
+    ],
   },
   {
     label: "'Micro-80X' Wristcomm, Lockpick Set, Body Cam",
-    hackingIds: ["MicWrstDVK80Xp4t"],
-    other: ["Lockpick Set", "Body Cam"],
+    items: [
+      { pack: HACKER, id: "MicWrstDVK80Xp4t" },
+      { pack: EQP,    id: "GPeQpFIBuQIrKzX0" },
+      { pack: EQP,    id: "EuaVN5enhMTMonXh" },
+    ],
   },
   {
     label: "Radio Jammer, Tranq Pistol, Snatcher",
-    hackingIds: ["SnatchrDvic150cr"],
-    other: ["Radio Jammer", "Tranq Pistol"],
+    items: [
+      { pack: EQP,    id: "qSyt35aUMjJMDHkz" },
+      { pack: WPN,    id: "pioKk5wqRXEHxkMy" },
+      { pack: HACKER, id: "SnatchrDvic150cr" },
+    ],
   },
   {
     label: "Salvage Drone, Explosives & Detonator",
-    hackingIds: [],
-    other: ["Salvage Drone", "Explosives & Detonator"],
+    items: [
+      { pack: EQP, id: "81GOG2CoJ1E9HoeR" },
+      { pack: EQP, id: "u2rWP6CUonlVFx8F" },
+    ],
   },
   {
     label: "Cat (Synthetic), 'MX Tattler' (Keylogger)",
-    hackingIds: ["MXTattlrMgrmX5Qz", "KeyLogrSftw1kcrL"],
-    other: ["Cat (Synthetic)"],
+    items: [
+      { pack: EQP,    id: "68X3lspUGatbSqQa" },
+      { pack: HACKER, id: "MXTattlrMgrmX5Qz" },
+      { pack: HACKER, id: "KeyLogrSftw1kcrL" },
+    ],
   },
 ];
 
@@ -68,24 +104,30 @@ async function rollHackerLoadout(actor) {
   const loadout = HACKER_LOADOUTS[resultIndex];
   if (!loadout) return;
 
-  if (loadout.hackingIds.length > 0) {
-    const itemPack = game.packs.get("fvtt_mosh_1e_hacking.items_hacking_1e");
-    if (itemPack) {
-      const docs = await Promise.all(loadout.hackingIds.map(id => itemPack.getDocument(id)));
-      const toCreate = docs.filter(Boolean).map(d => d.toObject());
-      if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
+  // Group by pack so we only call getDocument once per pack.
+  const byPack = {};
+  for (const { pack, id } of loadout.items) {
+    (byPack[pack] ??= []).push(id);
+  }
+
+  const toCreate = [];
+  const missing  = [];
+  for (const [packKey, ids] of Object.entries(byPack)) {
+    const pack = game.packs.get(packKey);
+    if (!pack) { missing.push(...ids); continue; }
+    const docs = await Promise.all(ids.map(id => pack.getDocument(id)));
+    for (const doc of docs) {
+      if (doc) toCreate.push(doc.toObject());
+      else missing.push(ids[docs.indexOf(doc)]);
     }
   }
 
-  if (loadout.other.length > 0) {
-    await ChatMessage.create({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div>
-        <strong>Hacker Loadout — ${actor.name}</strong><br>
-        <em>Rolled:</em> ${loadout.label}<br>
-        <em>Grant manually:</em> ${loadout.other.join(", ")}
-      </div>`,
-    });
+  if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
+
+  if (missing.length) {
+    ui.notifications.warn(
+      `Hacker Loadout: ${missing.length} item(s) could not be found in their compendium pack.`
+    );
   }
 }
 
