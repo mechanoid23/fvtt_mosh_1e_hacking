@@ -124,7 +124,63 @@ Hooks.on("createItem", async (item, _options, userId) => {
       "flags.fvtt_mosh_1e_hacking.pre_sinclair2_bonus": hackingSkill.system.bonus,
     });
     ui.notifications.info(`${actor.name}: Sinclair 2 upgrades Hacking to Master level.`);
+    return;
   }
+
+  // Single-Use Software — prompt to assign to a deck or wristcomm in the character's inventory.
+  if (item.flags?.fvtt_mosh_1e_hacking?.category === "single-use-software") {
+    const carriers = actor.items.filter(i =>
+      ["deck", "wristcomm"].includes(i.flags?.fvtt_mosh_1e_hacking?.category) && i.id !== item.id
+    );
+    if (carriers.length === 0) return;
+    const opts = carriers.map(d => `<option value="${d.id}">${d.name}</option>`).join("");
+    const deckId = await foundry.applications.api.DialogV2.wait({
+      window: { title: "Assign Software to Deck" },
+      content: `<div style="padding:4px">
+        <label>Load <strong>${item.name}</strong> onto which deck?</label><br>
+        <select id="deck-sel" style="width:100%;margin-top:6px">
+          <option value="">— Unassigned —</option>
+          ${opts}
+        </select>
+      </div>`,
+      buttons: [
+        { action: "ok", label: "Assign", default: true,
+          callback: (_e, _b, dlg) => dlg.querySelector("#deck-sel").value || null },
+        { action: "skip", label: "Skip", callback: () => null },
+      ],
+    });
+    if (deckId) await item.setFlag("fvtt_mosh_1e_hacking", "loadedOn", deckId);
+  }
+});
+
+const CATEGORY_LABELS = {
+  deck: "Deck",
+  wristcomm: "Wristcomm",
+  gear: "Gear",
+  "single-use-software": "Single-Use Software",
+};
+
+// Render equipment type (and loaded-deck name for software) on hacking item sheets.
+Hooks.on("renderItemSheet", (app, html, _data) => {
+  const item = app.item;
+  const category = item?.flags?.fvtt_mosh_1e_hacking?.category;
+  if (!category) return;
+
+  const label = CATEGORY_LABELS[category] ?? category;
+  let sub = "";
+  if (category === "single-use-software") {
+    const loadedOnId = item.flags?.fvtt_mosh_1e_hacking?.loadedOn;
+    if (loadedOnId && item.parent) {
+      const deck = item.parent.items.get(loadedOnId);
+      if (deck) sub = ` &mdash; ${deck.name}`;
+    }
+  }
+
+  const badge = `<p class="hacking-item-type" style="text-align:center;font-size:0.72em;font-weight:bold;text-transform:uppercase;letter-spacing:1px;color:#888;margin:0 0 6px 0">${label}${sub}</p>`;
+  const $html = html.jquery ? html : $(html);
+  const $anchor = $html.find("h1, .item-name, .document-name").first();
+  if ($anchor.length) $anchor.after(badge);
+  else $html.find(".window-content").prepend(badge);
 });
 
 // Inventory removal hooks — restore state when hacking decks are removed.
