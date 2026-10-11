@@ -218,11 +218,11 @@ Hooks.on("renderItemSheet", (app, html, _data) => {
     }
   }
 
-  const badge = `<p class="hacking-item-type" style="text-align:center;font-size:0.72em;font-weight:bold;text-transform:uppercase;letter-spacing:1px;color:#888;margin:0 0 6px 0">${label}${sub}</p>`;
+  const badge = `<p class="hacking-item-type" style="text-align:center;font-size:0.72em;font-weight:bold;text-transform:uppercase;letter-spacing:1px;color:#888;margin:2px 0 4px 0">${label}${sub}</p>`;
   const $html = html.jquery ? html : $(html);
-  const $anchor = $html.find("h1, .item-name, .document-name").first();
+  const $anchor = $html.find(".sheet-header").first();
   if ($anchor.length) $anchor.after(badge);
-  else $html.find(".window-content").prepend(badge);
+  else $html.prepend(badge);
 });
 
 // Inventory removal hooks — restore state when hacking decks are removed.
