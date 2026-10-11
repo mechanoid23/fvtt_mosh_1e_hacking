@@ -191,6 +191,19 @@ Hooks.on("renderItemSheet", (app, html, _data) => {
   if ($anchor.length) $anchor.after(badge);
   else $html.prepend(badge);
 
+  // Loaded-software list for decks and wristcomms embedded on a character.
+  if (["deck", "wristcomm"].includes(category) && item.isEmbedded && item.parent?.type === "character") {
+    const loaded = item.parent.items.filter(i =>
+      i.flags?.fvtt_mosh_1e_hacking?.category === "single-use-software" &&
+      i.flags?.fvtt_mosh_1e_hacking?.loadedOn === item.id
+    );
+    const slotHtml = loaded.length
+      ? loaded.map(s => `<span style="display:inline-block;margin:1px 3px;padding:1px 5px;background:#333;border-radius:2px;font-size:0.8em">${s.name}</span>`).join("")
+      : `<span style="color:#666;font-size:0.8em;font-style:italic">No software loaded</span>`;
+    const $slots = $(`<div style="text-align:center;margin:0 8px 6px">Loaded: ${slotHtml}</div>`);
+    $html.find(".hacking-item-type").after($slots);
+  }
+
   // Deck-assignment button for single-use software embedded on a character.
   if (category !== "single-use-software" || !item.isEmbedded || item.parent?.type !== "character") return;
 
@@ -241,6 +254,20 @@ Hooks.on("deleteItem", async (item, _options, userId) => {
   if (userId !== game.user.id) return;
   const actor = item.parent;
   if (!actor || actor.type !== "character") return;
+
+  // Single-use software burned — notify which deck is now free.
+  if (item.flags?.fvtt_mosh_1e_hacking?.category === "single-use-software") {
+    const loadedOnId = item.flags?.fvtt_mosh_1e_hacking?.loadedOn;
+    if (loadedOnId) {
+      const deck = actor.items.get(loadedOnId);
+      const deckName = deck?.name ?? "its deck";
+      await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        content: `<em>${item.name} burned — unloaded from ${deckName}.</em>`,
+      });
+    }
+    return;
+  }
 
   if (item.name === "KOMPAN-88 'Burndeck'") {
     await actor.unsetFlag("fvtt_mosh_1e_hacking", "hasBurndeck");
