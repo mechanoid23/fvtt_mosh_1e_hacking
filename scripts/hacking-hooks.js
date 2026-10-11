@@ -187,7 +187,7 @@ Hooks.on("createItem", async (item, _options, userId) => {
       </div>`,
       buttons: [
         { action: "ok", label: "Assign", default: true,
-          callback: (_e, _b, dlg) => (dlg.element ?? dlg).querySelector("#deck-sel")?.value || null },
+          callback: (evt) => evt.target.closest("form, .dialog-content, .window-content")?.querySelector("#deck-sel")?.value || null },
         { action: "skip", label: "Skip", callback: () => null },
       ],
     });
