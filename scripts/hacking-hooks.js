@@ -175,7 +175,7 @@ const CATEGORY_LABELS = {
   deck: "Deck",
   wristcomm: "Wristcomm",
   gear: "Gear",
-  "single-use-software": "Single-Use Software",
+  "software": "Single-Use Software",
 };
 
 // Render equipment type and deck-assignment controls on hacking item sheets.
@@ -195,7 +195,7 @@ Hooks.on("renderItemSheet", (app, html, _data) => {
   // Loaded-software list for decks and wristcomms embedded on a character.
   if (["deck", "wristcomm"].includes(category) && item.isEmbedded && item.parent?.type === "character") {
     const loaded = item.parent.items.filter(i =>
-      i.flags?.fvtt_mosh_1e_hacking?.category === "single-use-software" &&
+      i.flags?.fvtt_mosh_1e_hacking?.category === "software" &&
       i.flags?.fvtt_mosh_1e_hacking?.loadedOn === item.id
     );
     const slotHtml = loaded.length
@@ -257,7 +257,7 @@ Hooks.on("deleteItem", async (item, _options, userId) => {
   if (!actor || actor.type !== "character") return;
 
   // Single-use software burned — notify which deck is now free.
-  if (item.flags?.fvtt_mosh_1e_hacking?.category === "single-use-software") {
+  if (item.flags?.fvtt_mosh_1e_hacking?.category === "software") {
     const loadedOnId = item.flags?.fvtt_mosh_1e_hacking?.loadedOn;
     if (loadedOnId) {
       const deck = actor.items.get(loadedOnId);
