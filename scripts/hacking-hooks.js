@@ -29,7 +29,7 @@ const HACKER_LOADOUTS = [
       { pack: HACKER, id: "BurnDeckKompn88X" },
       { pack: HACKER, id: "CoyBoySftw2kcrM8" },
       { pack: ARM,    id: "MW8GRF9grFvsAGcR" },
-      { pack: MED,    id: "EkA39xa1vq6SghtP" },
+      { pack: EQP,    id: "EkA39xa1vq6SghtP" },
     ],
   },
   {
