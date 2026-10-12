@@ -187,9 +187,10 @@ Hooks.on("renderItemSheet", (app, html, _data) => {
   const label = CATEGORY_LABELS[category] ?? category;
   const badge = `<p class="hacking-item-type" style="text-align:center;font-size:0.72em;font-weight:bold;text-transform:uppercase;letter-spacing:1px;color:#888;margin:2px 0 4px 0">${label}</p>`;
   const $html = html.jquery ? html : $(html);
-  const $anchor = $html.find(".sheet-header").first();
-  if ($anchor.length) $anchor.after(badge);
-  else $html.prepend(badge);
+  // Try progressively broader anchors until one matches.
+  const $anchor = $html.find(".sheet-header, nav.sheet-tabs, .sheet-body, form").first();
+  if ($anchor.length) $anchor.before(badge);
+  else $html.find("form").prepend(badge);
 
   // Loaded-software list for decks and wristcomms embedded on a character.
   if (["deck", "wristcomm"].includes(category) && item.isEmbedded && item.parent?.type === "character") {
