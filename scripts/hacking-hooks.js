@@ -199,7 +199,7 @@ Hooks.on("renderItemSheet", (app, html, _data) => {
       i.flags?.fvtt_mosh_1e_hacking?.loadedOn === item.id
     );
     const slotHtml = loaded.length
-      ? loaded.map(s => `<span style="display:inline-block;margin:1px 3px;padding:1px 5px;background:#333;border-radius:2px;font-size:0.8em">${s.name}</span>`).join("")
+      ? loaded.map(s => `<strong>${s.name}</strong>`).join(", ")
       : `<span style="color:#666;font-size:0.8em;font-style:italic">No software loaded</span>`;
     const $slots = $(`<div style="text-align:center;margin:0 8px 6px">Loaded: ${slotHtml}</div>`);
     $html.find(".hacking-item-type").after($slots);
