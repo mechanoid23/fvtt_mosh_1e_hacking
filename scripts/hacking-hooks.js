@@ -293,3 +293,24 @@ Hooks.on("deleteItem", async (item, _options, userId) => {
     ui.notifications.info(`${actor.name}: Sinclair 2 removed. Hacking restored to Expert level.`);
   }
 });
+
+// Show consumption dialog when a software item is clicked in the actor sheet.
+Hooks.on("renderActorSheet", (app, html, _data) => {
+  const actor = app.actor;
+  if (!actor || actor.type !== "character") return;
+
+  html.find(".item").each((_, li) => {
+    const itemId = li.dataset?.itemId;
+    if (!itemId) return;
+    const item = actor.items.get(itemId);
+    if (item?.flags?.fvtt_mosh_1e_hacking?.category !== "software") return;
+
+    $(li).find(".description-roll").on("click.hacking-consume", async () => {
+      const consume = await foundry.applications.api.DialogV2.confirm({
+        window: { title: "Consume Software?" },
+        content: `<p>Was <strong>${item.name}</strong> used? Remove it from inventory?</p>`,
+      });
+      if (consume) await item.delete();
+    });
+  });
+});
